@@ -1,6 +1,7 @@
 # password_strength_checker/main.py
 
 import re
+import math
 from colorama import Fore, Style, init
 
 # Initialize colorama
@@ -37,6 +38,19 @@ def get_strength_score(password: str) -> int:
     score += check_symbol(password)
     return score
 
+def calculate_entropy(password: str) -> float:
+    """Estimate password entropy in bits."""
+    charsets = 0
+    if check_lowercase(password): charsets += 26
+    if check_uppercase(password): charsets += 26
+    if check_digit(password): charsets += 10
+    if check_symbol(password): charsets += 32
+
+    if charsets == 0:
+        return 0.0
+
+    return len(password) * math.log2(charsets)
+
 def categorize(score: int) -> tuple[str, str]:
     """Categorize password strength based on score."""
     if score <= 2:
@@ -46,10 +60,11 @@ def categorize(score: int) -> tuple[str, str]:
     else:
         return ("Strong", Fore.GREEN)
 
-def display_result(score: int, strength: str, color: str) -> None:
+def display_result(score: int, strength: str, color: str, entropy: float) -> None:
     """Display the password strength result with colored output."""
     print("\n" + "-" * 40)
     print(f"Password Score   : {score}/5")
+    print(f"Password Entropy : {entropy:.2f} bits")
     print(f"Password Strength: {color}{strength}{Style.RESET_ALL}")
     print("-" * 40 + "\n")
 
@@ -61,9 +76,10 @@ def main():
     password = input("Enter a password to check: ")
 
     score = get_strength_score(password)
+    entropy = calculate_entropy(password)
     strength, color = categorize(score)
 
-    display_result(score, strength, color)
+    display_result(score, strength, color, entropy)
 
 if __name__ == "__main__":
     main()
